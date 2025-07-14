@@ -18,6 +18,10 @@ const LinkShortnerSchema = new mongoose.Schema({
     shortCode: {
         type: String,
         required:true,
+    },
+    shortLink:{
+        type:String,
+        default:"none"
     }
 },{timestamps:true})
 module.exports = mongoose.model('url', LinkShortnerSchema)

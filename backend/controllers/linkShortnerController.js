@@ -3,15 +3,14 @@ const { Log } = require('../../loging-middleware/logginMiddelware')
 const generateUniqueShortCode = require('../utils/helper')
 
 const createLinkShortner = async (req, res) => {
-
     try {
         const { originalUrl, time, shortCode } = req.body
 
-        if (!originalUrl || !shortCode) {
+        if (!originalUrl) {
             await Log("backend", "warn", "linkShortner", "Missing originalUrl in request");
             return res.status(400).json({
-                success:false,
-                message: "Missing originalUrl in request"
+                success: false,
+                message: "originalUrl is required"
             });
         }
 
@@ -36,26 +35,26 @@ const createLinkShortner = async (req, res) => {
             endShortCode = await generateUniqueShortCode();
         }
 
+        const expiryDate = new Date(Date.now() + (time || 30) * 24 * 60 * 60 * 1000);
 
-        // Create new link shortener entry
         const createLink = new LinkShortnerSchema({
             originalUrl,
             shortCode: endShortCode,
             validity: {
-                time
+                time: time || 30
             },
+            shortUrl: `${req.protocol}://${req.get('host')}/${endShortCode}`,
+            expiryDate
         });
 
-       await createLink.save();
+        await createLink.save();
 
-        await Log("backend", "info", "linkShortner", `Successfully created short link: ${finalShortCode} for ${originalUrl}`);
+        await Log("backend", "info", "linkShortner", `Successfully created short link: ${endShortCode} for ${originalUrl}`);
 
         res.status(201).json({
             success: true,
             data: {
-                id: createLink._id,
-                originalUrl: createLink.originalUrl,
-                shortCode: createLink.shortCode,
+                expires: time || 30,
                 shortUrl: `${req.protocol}://${req.get('host')}/${createLink.shortCode}`,
             }
         });
@@ -69,6 +68,23 @@ const createLinkShortner = async (req, res) => {
     }
 }
 
+const getAllLinks=async(req,res)=>{
+    try {
+        const links = await LinkShortnerSchema.find()
+        res.status(200).json({
+            success: true,
+            data: links
+            });
+    } catch (error) {
+        await Log("backend", "error", "linkShortner", `Error getting all links:
+            ${error.message}`);
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong in get all controller"
+                });
+    }
+}
 
 
-module.exports = { createLinkShortner };
+
+module.exports = { createLinkShortner ,getAllLinks};

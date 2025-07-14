@@ -1,3 +1,4 @@
+const LinkShortnerSchema = require('../models/LinkShotnerSchema')
 const generateUniqueShortCode = async () => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let shortCode;
